@@ -1,0 +1,6 @@
+
+/* Class = "UILabel"; text = "Guess the number between 1 ~ 100."; ObjectID = "CL6-1V-YBN"; */
+"CL6-1V-YBN.text" = "Guess the number between 1 ~ 100.";
+
+/* Class = "UIButton"; normalTitle = "Guess"; ObjectID = "c9o-LB-wo7"; */
+"c9o-LB-wo7.normalTitle" = "Guess";
