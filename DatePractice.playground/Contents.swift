@@ -1,6 +1,8 @@
 import UIKit
 import Foundation
 
+let calendar = NSCalendar.current
+
 let bDay = "2015-5-15"
 
 let dateFormatter = DateFormatter()
@@ -8,9 +10,20 @@ dateFormatter.dateFormat = "yyyy-MM-dd"
 
 let bDate = dateFormatter.date(from: bDay)
 
+let schedule = dateFormatter.date(from: "2015-9-12")
+let last = dateFormatter.date(from: "2015-8-15")
+
+
+let interval = calendar.dateComponents([.year, .day], from: last!, to: schedule!)
+print(interval)
+
+let requiredInterval =  DateComponents(year: 0, day: 28)
+requiredInterval >= interval
+
+
 var scheduleByMonth = [2,4,6,18]
 
-let calendar = NSCalendar.current
+
 let bDateComponent = calendar.dateComponents([.year, .month, .day], from: bDate!)
 
 
