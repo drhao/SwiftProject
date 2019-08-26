@@ -48,12 +48,15 @@ print(scheduledDate)
 print(interval)
 //print(bDateComponent)
 print(bDate!)
-print(nextVaccinationDate!)
+//print(nextVaccinationDate!)
 print(NSLocale.current)
 
 
 //Add minimumVaccinatedAge: DateComponents?
 
+//Vaccine: vaccinatedVaccines: [VaccineIdv?], unvaccinatedVaccines [VaccineIdv?], unnecessayVaccines[]
+//button: CheckVaccinated -> 按了會move from unvaccinagtedVaccines to vaccinated or unnecessaryVaccines
+//
 
 
 
