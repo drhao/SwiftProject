@@ -3,7 +3,12 @@
    version = "3.0">
    <TimelineItems>
       <LoggerValueHistoryTimelineItem
-         documentLocation = "file:///Users/drhao/Documents/GitHub/SwiftProject/PlayGroundVaccine.playground#CharacterRangeLen=37&amp;CharacterRangeLoc=8466&amp;EndingColumnNumber=0&amp;EndingLineNumber=256&amp;StartingColumnNumber=1&amp;StartingLineNumber=255&amp;Timestamp=588556609.4370019"
+         documentLocation = "file:///Users/drhao/Documents/GitHub/SwiftProject/PlayGroundVaccine.playground#CharacterRangeLen=37&amp;CharacterRangeLoc=11798&amp;EndingColumnNumber=0&amp;EndingLineNumber=346&amp;StartingColumnNumber=1&amp;StartingLineNumber=345&amp;Timestamp=588646055.737183"
+         selectedRepresentationIndex = "0"
+         shouldTrackSuperviewWidth = "NO">
+      </LoggerValueHistoryTimelineItem>
+      <LoggerValueHistoryTimelineItem
+         documentLocation = "file:///Users/drhao/Documents/GitHub/SwiftProject/PlayGroundVaccine.playground#CharacterRangeLen=22&amp;CharacterRangeLoc=9821&amp;EndingColumnNumber=0&amp;EndingLineNumber=303&amp;StartingColumnNumber=1&amp;StartingLineNumber=302&amp;Timestamp=588646055.738361"
          selectedRepresentationIndex = "0"
          shouldTrackSuperviewWidth = "NO">
       </LoggerValueHistoryTimelineItem>

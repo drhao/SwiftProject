@@ -37,20 +37,72 @@ protocol UpdateVaccinationStatus {
     func recordVaccinationDate()
 }
 
+enum intervalForLiveVaccine: Int {
+    case live = 28
+    case nonLive = 0
+}
+
+//Establish a user
 class Child  {
-    var lastVaccinationDate: NSDate?
-    var nextVaccinationDate: NSDate?
+    var requiredVaccines = [Vaccine?]()
+    var lastDateForLiveVaccine: Date?
+    var nextVaccinationDate: Date?
+    var bDay: Date
     //var requiredVaccine = [Vaccine?]()
     
-    func checkLastVaccinationDate() {
-        <#code#>
+    //Deal with the interaction of all vaccine
+    //most important: live to live
+    func checkLastDateForLiveVaccine() {
+        for v in self.requiredVaccines {
+            if let checkV = v, checkV.isLiveVaccine == true, let checkDate = checkV.lastVaccinationDate {
+                if let last = self.lastDateForLiveVaccine {
+                    if checkDate > last {
+                        self.lastDateForLiveVaccine = checkDate
+                    }
+                } else {
+                    self.lastDateForLiveVaccine = checkDate
+                }
+            }
+            
+        }
     }
     
     func renewScheduledDate() {
-        
+        for v in self.requiredVaccines {
+            if let checkV = v, checkV.isLiveVaccine == true, let checkDate = checkV.nextVaccinationDate, let last = self.lastDateForLiveVaccine {
+                //check if the interval to next vaccination date for live vaccine >= 28days
+                if last + TimeInterval(28*24*60*60) > checkDate {
+                    let nextDose = checkV.numOfVaccinated
+                    v?.vaccines[nextDose]?.scheduledDate = last + TimeInterval(28*24*60*60)
+                    v?.update()
+                }
+            }
+        }
     }
+    
     func checkNextVaccinationDate() {
-        <#code#>
+        //find the earliest date
+        for v in self.requiredVaccines {
+            if let checkV = v, let checkDate = checkV.nextVaccinationDate {
+                if let next = self.nextVaccinationDate {
+                    if checkDate < next {
+                        self.nextVaccinationDate = checkDate
+                    }
+                } else {
+                    self.nextVaccinationDate = checkDate
+                }
+            }
+        }
+    }
+    
+    func update() {
+        checkLastDateForLiveVaccine()
+        renewScheduledDate()
+        checkNextVaccinationDate()
+    }
+    
+    init(birthday: Date) {
+        self.bDay = birthday
     }
 }
 
@@ -97,32 +149,42 @@ class Vaccine: VaccinationDateArranger {
             //re-schedule according to the shortest interval (and minimum age)
             return earliest
         }
+        //return next <= earliest ? next: earliest
     }
     
     func renewScheduledDate() {
+        //if schduled date < today -> re-schedule to today
+        guard let schedule = self.vaccines[numOfVaccinated]?.scheduledDate else {
+            return
+        }
         //check the 1st unvaccinated
+        let today = Date()
+        if schedule < today {
+            let schedule = today
+            self.vaccines[numOfVaccinated]?.scheduledDate = schedule
+        }
+        
         if (self.name == "HBV") && (numOfVaccinated == 2) {
             let earliestFromOne = calendar.date(byAdding: DateComponents(day: 112), to: self.vaccines[0]!.didVaccinateDate!)
             let earliestFromTwo = calendar.date(byAdding: DateComponents(day: 56), to: self.vaccines[1]!.didVaccinateDate!)
-            if (self.vaccines[2]?.scheduledDate)! < earliestFromOne!, earliestFromOne! < earliestFromTwo! {
-                self.vaccines[2]?.scheduledDate = earliestFromTwo!
-            } else if (self.vaccines[2]?.scheduledDate)! < earliestFromOne! {
-                self.vaccines[2]?.scheduledDate = earliestFromOne!
-            } else {
-                return
+            let earliest = earliestFromOne! < earliestFromTwo! ? earliestFromOne: earliestFromTwo
+            if schedule < earliest! {
+                self.vaccines[2]?.scheduledDate = earliest
             }
+            
         } else {
-            if let v = self.vaccines[numOfVaccinated], let schedule = v.scheduledDate, let last = self.lastVaccinationDate, let interval =  v.shortestIntervalFromLast  {
+            if let last = self.lastVaccinationDate, let interval = self.vaccines[numOfVaccinated]?.shortestIntervalFromLast  {
                 self.vaccines[numOfVaccinated]?.scheduledDate = updateSchedule(LastVaccinationDate: last, NextVaccinationDate: schedule, intervalFromLast: interval)
                 
             }
         
-            for d in numOfVaccinated+1..<numOfDoses {
-                if let v = self.vaccines[d], let schedule = v.scheduledDate, let interval =  v.shortestIntervalFromLast, let last =  self.vaccines[d-1]?.scheduledDate {
-                    self.vaccines[d]?.scheduledDate = updateSchedule(LastVaccinationDate: last, NextVaccinationDate: schedule, intervalFromLast: interval)
+            for d in (numOfVaccinated+1)..<numOfDoses {
+                if let v = self.vaccines[d], let next = v.scheduledDate, let interval =  v.shortestIntervalFromLast, let last =  self.vaccines[d-1]?.scheduledDate {
+                    self.vaccines[d]?.scheduledDate = updateSchedule(LastVaccinationDate: last, NextVaccinationDate: next, intervalFromLast: interval)
                 }
             }
         }
+    
         //renew scheduledDate
         //1. if scheduledDate <= lastDate
         //2-1. if scheduledDate - lastDate <= shorterstInterval -> re-calculate schedualedDate
@@ -154,7 +216,7 @@ class Vaccine: VaccinationDateArranger {
         //if not the right next dose, alert!
         self.vaccines[dose-1]?.vaccinated = true
         self.vaccines[dose-1]?.didVaccinateDate = date
-        self.numOfVaccinated += 1
+        //self.numOfVaccinated += 1
         self.update()
     }
     
@@ -220,7 +282,7 @@ enum VaccinationStatus {
     case notrequired
 }
 
-
+//Playground
 
 
 let dateFormatter = DateFormatter()
@@ -228,6 +290,29 @@ dateFormatter.dateFormat = "yyyy-MM-dd"
 let birthday = "2015-5-15"
 let bDay = dateFormatter.date(from: birthday)
 
+let MMR = Vaccine(name: "MMR", doses: 2, schedule: [DateComponents(month: 12), DateComponents(month: 60)], bDay: bDay!, interval: [DateComponents(month: 12), DateComponents(day: 28)], isLiveVaccine: true)
+
+let JEV = Vaccine(name: "JEV", doses: 2, schedule: [DateComponents(month: 15), DateComponents(month: 27)], bDay: bDay!, interval: [DateComponents(month: 12), DateComponents(day: 12)], isLiveVaccine: true)
+
+let David = Child(birthday: bDay!)
+let requiredVaccine = [MMR, JEV]
+
+David.requiredVaccines.append(MMR)
+David.requiredVaccines.append(JEV)
+
+David.requiredVaccines
+
+David.requiredVaccines[0]?.nextVaccinationDate
+David.requiredVaccines[1]?.nextVaccinationDate
+
+David.requiredVaccines[0]?.recordVaccination(whichDose: 1, vaccinationDate: dateFormatter.date(from: "2016-7-25")!)
+David.requiredVaccines[0]?.nextVaccinationDate
+David.requiredVaccines[1]?.nextVaccinationDate
+David.update()
+David.lastDateForLiveVaccine
+David.requiredVaccines[0]?.nextVaccinationDate
+David.requiredVaccines[1]?.nextVaccinationDate
+David.nextVaccinationDate
 
 //create all vaccines.
 let FiveInOne = Vaccine(name: "5in1", doses: 4, schedule: [DateComponents(month: 2), DateComponents(month: 4), DateComponents(month: 6), DateComponents(month: 18)], bDay: bDay!, interval: [DateComponents(month: 2), DateComponents(month: 2), DateComponents(month: 2), DateComponents(month: 2)], isLiveVaccine: false)
@@ -241,16 +326,21 @@ FiveInOne.lastVaccinationDate
 FiveInOne.nextVaccinationDate
 FiveInOne.vaccines[0]?.vaccinated
 FiveInOne.vaccines[0]?.didVaccinateDate
+FiveInOne.vaccines[0]?.scheduledDate
 FiveInOne.vaccines[1]?.scheduledDate
+FiveInOne.vaccines[2]?.scheduledDate
 
 let HBV = Vaccine(name: "HBV", doses: 3, schedule: [DateComponents(month: 0), DateComponents(month: 1), DateComponents(month: 6)], bDay: bDay!, interval: [DateComponents(day: 0), DateComponents(day: 28), DateComponents(day: 56)], isLiveVaccine: false)
 
 print(HBV.nextVaccinationDate!)
 HBV.recordVaccination(whichDose: 1, vaccinationDate: dateFormatter.date(from: "2015-8-15")!)
 HBV.recordVaccination(whichDose: 2, vaccinationDate: dateFormatter.date(from: "2015-9-15")!)
+HBV.numOfVaccinated
 print(HBV.nextVaccinationDate!)
-HBV.vaccines[2]?.scheduledDate
+print(HBV.vaccines[2]?.scheduledDate!)
 
+David.requiredVaccines.append(HBV)
+David.requiredVaccines.append(JEV)
 
 //print(FiveInOne.vaccines[1]?.vaccinated!)
 print(FiveInOne.nextVaccinationDate!)
